@@ -20,7 +20,7 @@
           </el-form-item>
         </el-col>
         <el-col :span="6">
-          <el-button type="primary" @click="startScan">开始扫描</el-button>
+          <el-button type="primary" @click="startScan" :loading="loading">开始扫描</el-button>
         </el-col>
       </el-row>
     </el-form>
@@ -70,12 +70,14 @@ export default {
   },
   data() {
     return {
+      loading: false,
       form: {
         start_ip: '',
         end_ip: '',
       },
       scan_id: null,
-      tableData: []
+      tableData: [],
+      intervalID: null
     }
   }
   ,
@@ -89,26 +91,40 @@ export default {
       if (!this.scan_id) {
         return
       }
+      const _this = this
       const response = await checkScanStatus(this.scan_id)
-      if (response.data.status === true) {
+      if (response.data.ok === true) {
         // 扫描完成了
-
+        _this.loading = false
+        _this.$message({
+          message: '恭喜你，扫描完成了',
+          type: 'success'
+        });
+        clearInterval(_this.intervalID)
+        _this.intervalID = null
+        this.tableData = response.data.cve_data
       }
 
     },
 
     async startScan() {
       const _this = this
+      _this.loading = true
       if (!this.form.start_ip || !this.form.end_ip) {
         return
       }
       const result = await sendScan(this.form)
       if (result.code === 20000) {
-        this.$message({
+        _this.$message({
           message: '恭喜你，开始扫描',
           type: 'success'
         });
         _this.scan_id = result.data.scan_id
+
+        _this.intervalID = setInterval(() => {
+          _this.checkStatus()
+        }, 2000)
+
       } else {
         this.$message.error(result.message);
       }
@@ -208,68 +224,6 @@ export default {
         '澳大利亚': [133.775136, -25.274398],
         '新西兰': [174.885971, -40.900557]
       };
-      var DMData = [
-        [{
-          name: '中国'
-        }, {
-          name: "马来西亚",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "印度尼西亚",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "泰国",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "菲律宾",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "文莱",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "越南",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "老挝",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "缅甸",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "柬埔寨",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "新加坡",
-          value: 30
-        }]
-      ];
       //一带一路
       var D1LData = [
         [{
@@ -597,122 +551,6 @@ export default {
           value: 30
         }]
       ];
-      var OMData = [ //欧美国家
-        [{
-          name: '中国'
-        }, {
-          name: "挪威",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "丹麦",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "瑞典",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "芬兰",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "英国",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "荷兰",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "爱尔兰",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "比利时",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "卢森堡",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "法国",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "西班牙",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "葡萄牙",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "德国",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "奥地利",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "瑞士",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "美国",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "加拿大",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "澳大利亚",
-          value: 30
-        }],
-        [{
-          name: '中国'
-        }, {
-          name: "新西兰",
-          value: 30
-        }]
-      ];
 
       // 小飞机的图标，可以用其他图形替换
       const planePath =
@@ -723,11 +561,10 @@ export default {
         var res = [];
         for (let i = 0; i < data.length; i++) {
           var dataItem = data[i];
-          var fromCoord = geoCoordMap[dataItem[0].name];
           var toCoord = geoCoordMap[dataItem[1].name];
-          if (fromCoord && toCoord) {
+          if (toCoord) {
             res.push([{
-              coord: fromCoord // 起点坐标
+              coord: [116.40, 39.90] // 起点坐标
             }, {
               coord: toCoord // 终点坐标
             }])
@@ -738,10 +575,9 @@ export default {
 
       var color = ['#9ae5fc', '#dcbf71']; // 自定义图中要用到的颜色
       var series = []; // 用来存储地图数据
+      console.log(convertData(D1LData));
       [
-        //['中国', DMData],
         ['中国', D1LData]
-        // ['中国', OMData]
       ].forEach(function (item, i) {
         series.push({
           // 白色航线特效图
