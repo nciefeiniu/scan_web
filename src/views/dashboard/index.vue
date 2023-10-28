@@ -1,11 +1,11 @@
 <template>
   <div class="dashboard-container">
     <div style="width: 100%; height: 500px;" ref="myEchart"></div>
-    <el-row style="margin-top: 30px" :gutter="10">
+    <el-row style="margin-top: 30px" >
       <el-col :span="12" style="background-color: whitesmoke; padding: 10px">
         <div id="main" style="width: 100%; height:400px;"></div>
       </el-col>
-      <el-col :span="12" style="background-color: whitesmoke">
+      <el-col :span="12" style="background-color: whitesmoke; padding: 10px">
         <div id="main-2" style="width: 100%; height:400px;"></div>
       </el-col>
     </el-row>
@@ -24,13 +24,14 @@ export default {
     return {
       geos: [],
       vendor: {},
-      countries: {}
+      countries: []
     }
   },
   async mounted() {
     await this.getIndexData()
     this.initChart()
     this.initPie()
+    this.initScatter()
   },
   methods: {
     async getIndexData() {
@@ -38,20 +39,24 @@ export default {
       console.log(response)
       this.geos = response.data.geos;
       this.vendor = response.data.vendor;
+      this.countries = response.data.countries
     },
     initScatter() {
       var myChart = echarts.init(document.getElementById('main-2'));
       const option = {
+        title: {
+          text: '国家占比'
+        },
         xAxis: {
-          data: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+          data: this.countries[0]
         },
         yAxis: {},
         series: [
           {
             type: 'scatter',
-            data: [220, 182, 191, 234, 290, 330, 310],
+            data: this.countries[1],
             symbolSize: function (value) {
-              return value / 10;
+              return value / 2;
             }
           }
         ]
