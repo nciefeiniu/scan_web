@@ -20,6 +20,12 @@
           </el-form-item>
         </el-col>
         <el-col :span="6">
+
+          <el-form-item label="代理">
+            <el-input v-model="form.proxy" placeholder="socks5代理"></el-input>
+          </el-form-item>
+        </el-col>
+        <el-col :span="6">
           <el-button type="primary" @click="startScan" :loading="loading">开始扫描</el-button>
         </el-col>
       </el-row>
@@ -32,6 +38,7 @@
         style="width: 100%;margin-bottom: 20px;"
         row-key="id"
         border
+        :loading="loading"
         :tree-props="{children: 'children', hasChildren: 'hasChildren'}">
         <el-table-column
           prop="device_name"
@@ -46,6 +53,10 @@
         <el-table-column
           prop="country"
           label="所在国家">
+        </el-table-column>
+        <el-table-column
+          prop="ports"
+          label="开放端口">
         </el-table-column>
       </el-table>
     </div>
@@ -73,6 +84,7 @@ export default {
       form: {
         start_ip: '',
         end_ip: '',
+        proxy: ''
       },
       scan_id: null,
       tableData: [],
